@@ -2,8 +2,11 @@
 :timeout: 60
 :verbose: true
 :queues:
-  - critical
   - default
-  - mailers
-  - active_storage_analysis
-  - active_storage_purge
+scheduler:
+  schedule:
+    mark_abandoned_carts:
+      cron: '0 * * * *'
+      class: 'MarkCartAsAbandonedJob'
+      queue: default
+      description: 'Mark abandoned carts and remove old ones'
