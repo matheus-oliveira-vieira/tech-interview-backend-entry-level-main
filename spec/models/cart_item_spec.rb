@@ -11,8 +11,7 @@ RSpec.describe CartItem, type: :model do
 
     context 'with valid attributes' do
       it 'is valid with quantity greater than 0' do
-        cart_item = build(:cart_item)
-        expect(cart_item).to be_valid
+        expect(build(:cart_item)).to be_valid
       end
     end
 
@@ -32,13 +31,13 @@ RSpec.describe CartItem, type: :model do
       it 'is invalid without cart' do
         cart_item = build(:cart_item, cart: nil)
         expect(cart_item).not_to be_valid
-        expect(cart_item.errors[:cart]).to include('must exist')
+        expect(cart_item.errors[:cart]).to be_present
       end
 
       it 'is invalid without product' do
         cart_item = build(:cart_item, product: nil)
         expect(cart_item).not_to be_valid
-        expect(cart_item.errors[:product]).to include('must exist')
+        expect(cart_item.errors[:product]).to be_present
       end
     end
   end

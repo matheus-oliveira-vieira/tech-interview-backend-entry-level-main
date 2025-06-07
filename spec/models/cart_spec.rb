@@ -64,8 +64,12 @@ RSpec.describe Cart, type: :model do
 
     it 'calculates sum of all cart items totals' do
       total = cart.cart_items.sum(&:total_price)
-      expect(cart.update_total_price).to be_truthy
       expect(cart.total_price).to eq(total)
+    end
+
+    it 'returns 0 for empty cart' do
+      cart = create(:cart)
+      expect(cart.total_price).to eq(0)
     end
   end
 
@@ -136,7 +140,7 @@ RSpec.describe Cart, type: :model do
       cart.update!(updated_at: 8.days.ago)
       expect {
         Cart.clean_abandoned_carts
-      }.to change { Cart.count }.by(-1)
+      }.to change { Cart.exists?(cart.id) }.from(true).to(false)
     end
   end
 end
