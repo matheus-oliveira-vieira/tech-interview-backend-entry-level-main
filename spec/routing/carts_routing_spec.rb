@@ -7,11 +7,15 @@ RSpec.describe CartsController, type: :routing do
     end
 
     it 'routes to #create' do
-      pending "#TODO: Escreva um teste para validar a criação de um carrinho #{__FILE__}" 
+      expect(post: '/cart').to route_to('carts#create')
     end
 
-    it 'routes to #add_item via POST' do
-      expect(post: '/cart/add_item').to route_to('carts#add_item')
+    it 'routes to #add_item' do
+      expect(put: '/cart/add_item').to route_to('carts#update')
+    end
+
+    it 'routes to #destroy' do
+      expect(delete: "/cart/1").to route_to("carts#destroy", product_id: "1")
     end
   end
-end 
+end
