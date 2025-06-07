@@ -1,4 +1,5 @@
 class CartsController < ApplicationController
+  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
   before_action :set_cart, only: [:show, :create, :update, :destroy]
 
   def show
@@ -25,8 +26,13 @@ class CartsController < ApplicationController
 
   def update
     product = Product.find(params[:product_id])
-    cart_item = @cart.cart_items.find_or_initialize_by(product_id: product.id)
-    cart_item.quantity = (cart_item.quantity || 0) + params[:quantity].to_i
+    cart_item = @cart.cart_items.find_by(product_id: product.id)
+
+    if cart_item
+      cart_item.quantity += params[:quantity].to_i
+    else
+      cart_item = @cart.cart_items.build(product: product, quantity: params[:quantity].to_i)
+    end
 
     if cart_item.save
       @cart.touch
@@ -83,5 +89,9 @@ class CartsController < ApplicationController
       end,
       total_price: @cart.total_price.to_f
     }
+  end
+
+  def record_not_found(exception)
+    render json: { error: exception.message }, status: :not_found
   end
 end
