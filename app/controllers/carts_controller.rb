@@ -1,50 +1,26 @@
 class CartsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
   before_action :set_cart, only: [:show, :create, :update, :destroy]
+  before_action :set_product, only: [:create, :update, :destroy]
 
   def show
     render json: cart_response
   end
 
   def create
-    product = Product.find(params[:product_id])
-    cart_item = @cart.cart_items.find_by(product_id: product.id)
+    cart_item = find_or_initialize_cart_item
 
-    if cart_item
-      cart_item.quantity += params[:quantity].to_i
-    else
-      cart_item = @cart.cart_items.build(product: product, quantity: params[:quantity].to_i)
-    end
-
-    if cart_item.save
-      @cart.touch
-      render json: cart_response, status: :created
-    else
-      render json: cart_item.errors, status: :unprocessable_entity
-    end
+    save_cart_item(cart_item, :created)
   end
 
   def update
-    product = Product.find(params[:product_id])
-    cart_item = @cart.cart_items.find_by(product_id: product.id)
+    cart_item = find_or_initialize_cart_item
 
-    if cart_item
-      cart_item.quantity += params[:quantity].to_i
-    else
-      cart_item = @cart.cart_items.build(product: product, quantity: params[:quantity].to_i)
-    end
-
-    if cart_item.save
-      @cart.touch
-      render json: cart_response
-    else
-      render json: cart_item.errors, status: :unprocessable_entity
-    end
+    save_cart_item(cart_item)
   end
 
   def destroy
-    product = Product.find(params[:product_id])
-    cart_item = @cart.cart_items.find_by(product_id: product.id)
+    cart_item = @cart.cart_items.find_by(product_id: @product.id)
 
     if cart_item
       cart_item.destroy
@@ -58,14 +34,30 @@ class CartsController < ApplicationController
   private
 
   def set_cart
-    @cart = current_cart
+    @cart = Cart.find_by(id: session[:cart_id]) || create_new_cart
   end
 
-  def current_cart
-    if session[:cart_id]
-      Cart.find_by(id: session[:cart_id]) || create_new_cart
+  def set_product
+    @product = Product.find(params[:product_id])
+  end
+
+  def find_or_initialize_cart_item
+    cart_item = @cart.cart_items.find_by(product_id: @product.id)
+
+    if cart_item
+      cart_item.quantity += params[:quantity].to_i
     else
-      create_new_cart
+      cart_item = @cart.cart_items.build(product: @product, quantity: params[:quantity].to_i)
+    end
+    cart_item
+  end
+
+  def save_cart_item(cart_item, success_status = :ok)
+    if cart_item.save
+      @cart.touch
+      render json: cart_response, status: success_status
+    else
+      render json: cart_item.errors, status: :unprocessable_entity
     end
   end
 
