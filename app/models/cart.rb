@@ -6,7 +6,11 @@ class Cart < ApplicationRecord
 
   after_touch :update_total_price
 
-  scope :abandoned, -> { where('updated_at < ?', 3.hours.ago) }
+  scope :active, -> { where('updated_at >= ?', 3.hours.ago) }
+  scope :to_be_marked_as_abandoned, -> {
+    where('updated_at < ? AND abandoned = ?', 3.hours.ago, false)
+  }
+  scope :abandoned, -> { where(abandoned: true) }
   scope :to_be_removed, -> { where('updated_at < ?', 7.days.ago) }
 
   def update_total_price
@@ -18,7 +22,7 @@ class Cart < ApplicationRecord
   end
 
   def self.clean_abandoned_carts
-    abandoned.update_all(abandoned: true)
+    to_be_marked_as_abandoned.find_each(&:mark_as_abandoned!)
     to_be_removed.destroy_all
   end
 end
